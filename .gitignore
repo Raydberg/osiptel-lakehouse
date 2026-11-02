@@ -1,0 +1,7 @@
+data/raw/
+data/processed/
+*.xlsx
+*.xls
+*.csv
+*.parquet
+.env
