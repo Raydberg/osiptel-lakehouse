@@ -1,0 +1,17 @@
+sources:
+
+  reclamos_presentados:
+    name: "Reclamos presentados"
+    source: "OSIPTEL"
+
+  reclamos_resueltos:
+    name: "Reclamos resueltos"
+    source: "OSIPTEL"
+
+  reclamos_averias:
+    name: "Reclamos por averías"
+    source: "OSIPTEL"
+
+  lineas_moviles:
+    name: "Líneas móviles"
+    source: "OSIPTEL"
