@@ -2,7 +2,8 @@ from pyspark.sql import functions as F
 
 from shared.cleaning import (
     clean_text,
-    normalize_departamento
+    normalize_departamento,
+    normalize_operador
 )
 
 # ============================================================
@@ -56,7 +57,7 @@ df_clean = (
     # Normalización textual
     .withColumn(
         "empresa_operadora",
-        clean_text("empresa_operadora")
+        normalize_operador("empresa_operadora")
     )
 
     .withColumn(

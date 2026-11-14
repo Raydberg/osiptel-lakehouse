@@ -2,7 +2,8 @@ from pyspark.sql import functions as F
 
 from shared.cleaning import (
     clean_text,
-    normalize_departamento
+    normalize_departamento,
+    normalize_operador
 )
 
 # ============================================================
@@ -54,12 +55,9 @@ df_clean = (
         F.col("empresa_operadora")
     )
 
-    # --------------------------------------------------------
-    # Normalización textual
-    # --------------------------------------------------------
     .withColumn(
         "empresa_operadora",
-        clean_text("empresa_operadora")
+        normalize_operador("empresa_operadora")
     )
 
     .withColumn(
@@ -206,6 +204,7 @@ if rejected_count > 0:
         .select(
             "empresa_operadora_original",
             "mes",
+            "departamento_original",
             "departamento",
             "servicio_involucrado",
             "forma_presentacion",
@@ -399,12 +398,71 @@ print(f"Posibles duplicados detectados: {exact_duplicate_rows}")
 print(f"Silver:                         {silver_count}")
 print(f"Grupos repetidos por grano:     {grain_duplicate_groups}")
 
+bronze_total = (
+    df_bronze
+    .select(
+        F.sum(
+            F.expr(
+                """
+                cast(
+                    try_cast(
+                        regexp_replace(
+                            trim(
+                                cast(
+                                    cantidad_reclamos_presentados
+                                    as string
+                                )
+                            ),
+                            ',',
+                            ''
+                        )
+                        as decimal(38,10)
+                    )
+                    as bigint
+                )
+                """
+            )
+        ).alias("total")
+    )
+    .first()["total"]
+)
+
+silver_total = (
+    df_silver
+    .agg(
+        F.sum(
+            "cantidad_reclamos_presentados"
+        ).alias("total")
+    )
+    .first()["total"]
+)
+rejected_total = (
+    df_rejected
+    .agg(
+        F.sum(
+            F.col("_cantidad_decimal")
+        ).alias("total")
+    )
+    .first()["total"]
+)
+
+rejected_total = rejected_total or 0
+
+print(f"Total reclamos Bronze:     {bronze_total}")
+print(f"Total reclamos Silver:     {silver_total}")
+print(f"Total reclamos rechazados: {rejected_total}")
+
+# Reconciliación de filas
 assert bronze_count == silver_count + rejected_count, (
-    "La reconciliación Bronze -> Silver no coincide."
+    "La reconciliación de registros Bronze -> Silver no coincide."
+)
+
+# Reconciliación de la medida
+assert bronze_total == silver_total + rejected_total, (
+    "La reconciliación de cantidades Bronze -> Silver + rechazados no coincide."
 )
 
 print("Reconciliación correcta.")
-
 # ============================================================
 # 14. RESULTADO SILVER
 # ============================================================
