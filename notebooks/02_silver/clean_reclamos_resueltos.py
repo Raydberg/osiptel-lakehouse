@@ -1,5 +1,9 @@
 from pyspark.sql import functions as F
 
+from shared.cleaning import (
+    clean_text,
+    normalize_departamento
+)
 
 # ============================================================
 # 1. CONFIGURACIÓN
@@ -35,36 +39,6 @@ print(f"Registros recibidos desde Bronze: {bronze_count}")
 display(df_bronze.limit(20))
 df_bronze.printSchema()
 
-
-# ============================================================
-# 3. FUNCIÓN DE LIMPIEZA DE TEXTO
-# ============================================================
-
-def clean_text(column_name):
-    """
-    - elimina espacios al inicio/final;
-    - reduce espacios múltiples;
-    - convierte vacío y '-' a NULL;
-    - estandariza texto en mayúsculas.
-    """
-
-    cleaned = F.regexp_replace(
-        F.trim(F.col(column_name).cast("string")),
-        r"\s+",
-        " "
-    )
-
-    return (
-        F.when(
-            cleaned.isNull()
-            | (cleaned == "")
-            | (cleaned == "-"),
-            F.lit(None)
-        )
-        .otherwise(F.upper(cleaned))
-    )
-
-
 # ============================================================
 # 4. LIMPIEZA Y ESTANDARIZACIÓN
 # ============================================================
@@ -85,8 +59,13 @@ df_clean = (
     )
 
     .withColumn(
+        "departamento_original",
+        F.col("departamento")
+    )
+
+    .withColumn(
         "departamento",
-        clean_text("departamento")
+        normalize_departamento("departamento")
     )
 
     .withColumn(

@@ -1,5 +1,9 @@
 from pyspark.sql import functions as F
 
+from shared.cleaning import (
+    clean_text,
+    normalize_departamento
+)
 
 # ============================================================
 # 1. CONFIGURACIÓN
@@ -19,7 +23,7 @@ spark.sql("CREATE SCHEMA IF NOT EXISTS osiptel_lakehouse.silver")
 df_bronze = spark.table(source_table)
 # Compatibilidad con tablas Bronze creadas antes
 # de incorporar el metadato _source_sheet
-if "_source_sheet" not in df_bronze.columns:
+if "_source_sheet" not in df_bronze.columns:"departamento",$0
     df_bronze = df_bronze.withColumn(
         "_source_sheet",
         F.lit("Dataset")
@@ -34,34 +38,6 @@ print(f"Registros recibidos desde Bronze: {bronze_count}")
 display(df_bronze.limit(20))
 
 df_bronze.printSchema()
-
-
-# ============================================================
-# 3. FUNCIONES DE LIMPIEZA
-# ============================================================
-
-def clean_text(column_name):
-    """
-    Limpia espacios, convierte vacío/'-' a NULL
-    y estandariza el texto en mayúsculas.
-    """
-
-    cleaned = F.regexp_replace(
-        F.trim(F.col(column_name).cast("string")),
-        r"\s+",
-        " "
-    )
-
-    return (
-        F.when(
-            cleaned.isNull()
-            | (cleaned == "")
-            | (cleaned == "-"),
-            F.lit(None)
-        )
-        .otherwise(F.upper(cleaned))
-    )
-
 
 # ============================================================
 # 4. LIMPIEZA Y ESTANDARIZACIÓN
@@ -87,8 +63,13 @@ df_clean = (
     )
 
     .withColumn(
+        "departamento_original",
+        F.col("departamento")
+    )
+
+    .withColumn(
         "departamento",
-        clean_text("departamento")
+        normalize_departamento("departamento")
     )
 
     .withColumn(
