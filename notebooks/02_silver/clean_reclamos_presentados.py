@@ -23,7 +23,7 @@ spark.sql("CREATE SCHEMA IF NOT EXISTS osiptel_lakehouse.silver")
 df_bronze = spark.table(source_table)
 # Compatibilidad con tablas Bronze creadas antes
 # de incorporar el metadato _source_sheet
-if "_source_sheet" not in df_bronze.columns:"departamento",$0
+if "_source_sheet" not in df_bronze.columns:
     df_bronze = df_bronze.withColumn(
         "_source_sheet",
         F.lit("Dataset")
@@ -322,6 +322,7 @@ df_silver = df_silver.select(
     "empresa_operadora_original",
     "empresa_operadora",
     "mes",
+    "departamento_original",
     "departamento",
     "servicio_involucrado",
     "forma_presentacion",

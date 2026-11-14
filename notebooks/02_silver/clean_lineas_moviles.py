@@ -386,6 +386,7 @@ display(
 df_silver = df_silver.select(
     "empresa_operadora_original",
     "empresa_operadora",
+    "departamento_original",
     "departamento",
     "modalidad_contractual",
     "mes",

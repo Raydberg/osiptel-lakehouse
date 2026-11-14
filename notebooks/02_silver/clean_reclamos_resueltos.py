@@ -380,6 +380,7 @@ df_silver = df_silver.select(
     "empresa_operadora_original",
     "empresa_operadora",
     "mes",
+    "departamento_original",
     "departamento",
     "servicio_involucrado",
     "medio_presentacion",
